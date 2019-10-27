@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 #
+# Copyright 2019 Fabrice Aeschbacher <fabrice.aeschbacher@gmail.com>
+#
 # Usage:
 # - open book with the web reader
 # - open each page, one after the other, by clickling 'next'
