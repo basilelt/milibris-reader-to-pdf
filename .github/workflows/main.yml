@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - '*'
+    branches:
+      - master
+      - test
 
 jobs:
   build:
