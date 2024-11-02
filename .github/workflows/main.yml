@@ -50,11 +50,12 @@ jobs:
     needs: [build-macos, build-linux]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Important for tags
       - uses: actions/download-artifact@v3
-      - name: Install GitHub CLI
+      - name: Setup GitHub CLI
         run: |
           type -p curl >/dev/null || (sudo apt update && sudo apt install -y curl)
           curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
@@ -74,5 +75,6 @@ jobs:
           gh release create "$VERSION" \
             --title "Release $VERSION" \
             --notes "Release $VERSION" \
-            dist/MilibrisReaderToPDF-macOS.zip \
-            dist/MilibrisReaderToPDF-linux.tar.gz
+            --draft=false \
+            macos-build/MilibrisReaderToPDF-macOS.zip \
+            linux-build/MilibrisReaderToPDF-linux.tar.gz
