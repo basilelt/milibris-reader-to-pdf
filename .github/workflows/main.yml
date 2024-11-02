@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set Up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
@@ -36,23 +36,16 @@ jobs:
           cd dist
           zip -r "Milibris Reader to PDF.zip" "Milibris Reader to PDF.app"
 
-      - id: create_release
-        name: Create Release
-        uses: actions/create-release@v1.1.2
+      - name: Create and Upload Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: refs/tags/v1.0.0
-          release_name: Release v1.0.0
-          draft: false
-          prerelease: false
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: "dist/Milibris Reader to PDF.zip"
-          asset_name: "Milibris Reader to PDF.zip"
-          asset_content_type: application/zip
+        run: |
+          # Extract version from tag
+          VERSION=${GITHUB_REF#refs/tags/}
+          
+          # Create release using GitHub CLI
+          gh release create $VERSION \
+            --title "Release $VERSION" \
+            --notes "Release $VERSION" \
+            --draft=false \
+            "dist/Milibris Reader to PDF.zip"
