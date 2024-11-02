@@ -30,7 +30,6 @@ OPTIONS = {
         'CFBundleShortVersionString': '1.0.0',
         'CFBundleIdentifier': 'com.basilelt.milibrisreader',
     },
-    'arch': 'x86_64;arm64',
 }
 
 setup(
