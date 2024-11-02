@@ -55,11 +55,6 @@ This project provides tools to:
    - Click "Convert to PDF" to initiate the conversion process.
    - A notification will appear upon successful completion.
 
-- Convert HTML files using the command line:
-  ```bash
-  python3 gen_pdf.py input.html
-  ```
-
 ### Troubleshooting
 
 - **Application Not Launching (GUI):**
