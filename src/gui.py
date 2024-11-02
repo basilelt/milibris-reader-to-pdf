@@ -1,36 +1,71 @@
+# gui.py
 # Modified on 2024-10-19 by BasileLT
-# - Added GUI
+# - Combined GUI and PDF generation functionalities
 #
 # Original code by Fabrice Aeschbacher under the MIT License.
 
 import sys
 import os
-import subprocess
+import mmap
+import urllib.request
+import shutil
+import img2pdf
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QFileDialog, QMessageBox
 )
 from PyQt6.QtCore import Qt
 
+# Constants for parsing HTML content
+PATTERN_START = b'background-image: url(&quot;//'
+PATTERN_START_SIZE = len(PATTERN_START)
+PATTERN_END = b'&quot;'
+PATTERN_END_SIZE = len(PATTERN_END)
+
+def get_page(url: str, subdir: str, page: int) -> None:
+    """
+    Download a single page image from the URL and save it locally.
+    """
+    file_name = os.path.join(subdir, f"page-{page:03}.jpg")
+    if os.path.isfile(file_name):
+        return
+    with urllib.request.urlopen(url) as response, open(file_name, 'wb') as out_file:
+        shutil.copyfileobj(response, out_file)
+
+def generate_pdf(html_file: str, output_dir: str) -> None:
+    """
+    Extract images from HTML and compile them into a PDF.
+    """
+    basename = os.path.basename(html_file)
+    name = os.path.splitext(basename)[0]
+    output_subdir = os.path.join(output_dir, name)
+    os.makedirs(output_subdir, exist_ok=True)
+
+    with open(html_file, encoding='utf-8') as f:
+        mm = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+        start = mm.find(PATTERN_START, 0)
+        page = 1
+        while start != -1:
+            start += PATTERN_START_SIZE
+            end = mm.find(PATTERN_END, start)
+            bytes_array = mm[start:end]
+            url = 'https://' + bytes_array.decode('utf-8')
+            get_page(url, output_subdir, page)
+            start = mm.find(PATTERN_START, end)
+            page += 1
+        mm.close()
+
+    pdf_path = os.path.join(output_dir, f"{name}.pdf")
+    image_files = sorted([
+        os.path.join(output_subdir, i)
+        for i in os.listdir(output_subdir)
+        if i.endswith(('.jpg', '.png'))
+    ])
+    with open(pdf_path, "wb") as f:
+        f.write(img2pdf.convert(image_files))
+
 class PDFConverterGUI(QWidget):
     """
-    A PyQt6-based GUI for converting Milibris Reader HTML files to PDF format.
-
-    This class provides a graphical interface allowing users to:
-    - Select an input folder containing HTML files
-    - Choose an output destination for PDF files
-    - Convert HTML files to PDF using gen_pdf.py
-
-    Attributes:
-        input_folder (str): Path to selected input directory
-        output_folder (str): Path to selected output directory
-        input_label (QLabel): Display for input folder path
-        output_label (QLabel): Display for output folder path
-        input_button (QPushButton): Button to select input folder
-        output_button (QPushButton): Button to select output folder
-        convert_button (QPushButton): Button to initiate conversion
-
-    Inherits:
-        QWidget: Base class from PyQt6 for GUI widgets
+    A PyQt6-based GUI for converting HTML files to PDF.
     """
 
     def __init__(self):
@@ -42,14 +77,7 @@ class PDFConverterGUI(QWidget):
         self.setup_ui()
 
     def setup_ui(self):
-        """Set up the graphical user interface for the PDF converter application.
-        
-        Creates and arranges the following UI elements:
-        - Input folder selection button and label
-        - Output destination button and label 
-        - Convert button to trigger PDF conversion
-        - Vertical layout to organize all elements
-        """
+        """Set up the graphical user interface."""
         layout = QVBoxLayout()
 
         # Input Folder Selection
@@ -78,92 +106,56 @@ class PDFConverterGUI(QWidget):
         self.setLayout(layout)
 
     def select_input_folder(self):
-        """Open a file dialog to select the input folder for PDF conversion.
-        
-        Opens a QFileDialog for folder selection and updates the GUI state:
-        - Stores selected path in self.input_folder
-        - Updates input_label text to show selected path
-        """
+        """Select the input folder."""
         folder = QFileDialog.getExistingDirectory(self, "Select Input Folder")
         if folder:
             self.input_folder = folder
             self.input_label.setText(f"Input Folder: {folder}")
 
     def select_output_destination(self):
-        """Open a file dialog to select the output destination for converted PDFs.
-        
-        Opens a QFileDialog for folder selection and updates the GUI state:
-        - Stores selected path in self.output_folder
-        - Updates output_label text to show selected destination
-        """
+        """Select the output destination."""
         folder = QFileDialog.getExistingDirectory(self, "Select Output Destination")
         if folder:
             self.output_folder = folder
             self.output_label.setText(f"Output Destination: {folder}")
 
     def convert_to_pdf(self):
-        """Convert HTML files in the input folder to PDF format.
-        
-        Processes all HTML files in the selected input folder using gen_pdf.py script.
-        Shows appropriate message dialogs for success/failure states.
-        
-        Error handling:
-        - Validates input/output folder selection
-        - Catches subprocess execution errors
-        - Handles unexpected exceptions
-        
-        Requirements:
-        - Input folder must contain HTML files
-        - gen_pdf.py must exist in the same directory
-        - Both input_folder and output_folder must be selected
-        """
+        """Convert selected HTML files to PDF."""
         try:
             if not self.input_folder or not self.output_folder:
-                QMessageBox.warning(self, "Missing Information", "Please select both input folder and output destination.")
+                QMessageBox.warning(
+                    self, "Missing Information",
+                    "Please select both input folder and output destination."
+                )
                 return
 
-            # Assuming gen-pdf.py is in the src/ directory
-            gen_pdf_path = os.path.join(os.path.dirname(__file__), 'gen_pdf.py')
-
-            # Iterate through HTML files in the input folder
             for file_name in os.listdir(self.input_folder):
                 if file_name.lower().endswith('.html'):
                     html_path = os.path.join(self.input_folder, file_name)
-                    subprocess.run(['python3', gen_pdf_path, html_path, self.output_folder], check=True)
+                    generate_pdf(html_path, self.output_folder)
 
             QMessageBox.information(self, "Success", "PDF conversion completed successfully.")
-        except subprocess.CalledProcessError as e:
-            QMessageBox.critical(self, "Conversion Error",
-                                 f"An error occurred during conversion:\n{e}")
         except FileNotFoundError as e:
-            QMessageBox.critical(self, "File Error",
-                                 f"Required file or directory not found:\n{e}")
+            QMessageBox.critical(self, "File Error", f"Required file or directory not found:\n{e}")
         except PermissionError as e:
-            QMessageBox.critical(self, "Permission Error",
-                                 f"Access denied. Please check folder permissions:\n{e}")
+            QMessageBox.critical(self, "Permission Error", f"Access denied:\n{e}")
         except OSError as e:
-            QMessageBox.critical(self, "System Error",
-                                 f"Operating system error occurred:\n{e}")
+            QMessageBox.critical(self, "System Error", f"OS error occurred:\n{e}")
         except Exception as e:
-            QMessageBox.critical(self, "Error",
-                                 f"An unexpected error occurred:\n{type(e).__name__}: {e}")
+            QMessageBox.critical(self, "Error", f"Unexpected error:\n{type(e).__name__}: {e}")
 
 def main():
-    """Launch the PDF converter GUI application.
-    
-    Creates QApplication instance and shows main window.
-    Handles application exit and cleanup.
-    """
+    """Launch the PDF converter GUI application."""
     try:
         app = QApplication(sys.argv)
         gui = PDFConverterGUI()
         gui.show()
-        return sys.exit(app.exec())
+        sys.exit(app.exec())
     except RuntimeError as e:
         print(f"Qt runtime error: {e}", file=sys.stderr)
         return 1
     except OSError as e:
-        print(f"System error: {e}", file=sys.stderr) 
+        print(f"System error: {e}", file=sys.stderr)
         return 1
     except KeyboardInterrupt:
         print("\nApplication terminated by user")

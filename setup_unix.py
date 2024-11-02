@@ -20,7 +20,7 @@ setup(
     version='1.0.0',
     packages=['src'],
     package_data={
-        'src': ['gen_pdf.py', 'app_icon.icns']
+        'src': ['src/app_icon.icns']
     },
     install_requires=[
         'PyQt6',
@@ -31,5 +31,5 @@ setup(
             'milibris-reader=src.gui:main',
         ],
     },
-    python_requires='>=3.8',
+    python_requires='>=3.12',
 )

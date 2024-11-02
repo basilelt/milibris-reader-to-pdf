@@ -18,9 +18,9 @@ License: MIT
 from setuptools import setup
 
 APP = ['src/gui.py']
-DATA_FILES = ['src/gen_pdf.py', 'src/app_icon.icns']
+DATA_FILES = ['src/app_icon.icns']
 OPTIONS = {
-    'argv_emulation': True,
+    'argv_emulation': False,
     'packages': ['PyQt6', 'img2pdf'],
     'includes': ['subprocess', 'mmap', 'urllib', 'shutil'],
     'excludes': ['packaging'],
