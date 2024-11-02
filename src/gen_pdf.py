@@ -59,7 +59,7 @@ def get_page(url: str, subdir: str, page: int) -> None:
     """
     print(url)
     print(page)
-    file_name = os.path.join(subdir, f"page-{page:03}")
+    file_name = os.path.join(subdir, f"page-{page:03}.jpg")
     if os.path.isfile(file_name):
         # no need to download again if already there
         return
@@ -94,13 +94,13 @@ def main() -> None:
         sys.exit(1)
 
     html_file = sys.argv[1]
+    output_dir = sys.argv[2] if len(sys.argv) > 2 else os.path.dirname(html_file)
     basename = os.path.basename(html_file)
     # split e.g. 'name.html' into 'name' and '.html'
     name = os.path.splitext(basename)[0]
-    try:
-        os.mkdir(name)
-    except FileExistsError:
-        pass
+
+    output_subdir = os.path.join(output_dir, name)
+    os.makedirs(output_subdir, exist_ok=True)
 
     # Add explicit UTF-8 encoding when opening HTML file
     with open(html_file, encoding='utf-8') as f:
@@ -112,13 +112,15 @@ def main() -> None:
             end = mm.find(PATTERN_END, start)
             bytes_array = mm[start:end]
             url = 'https://' + str(bytes_array, 'utf-8')
-            get_page(url, name, page)
+            get_page(url, output_subdir, page)
             start = mm.find(PATTERN_START, end)
             page = page + 1
         mm.close()
 
-    with open(f"{name}.pdf", "wb") as f:
-        f.write(img2pdf.convert(sorted([os.path.join(name, i) for i in os.listdir(name)])))
+    pdf_path = os.path.join(output_dir, f"{name}.pdf")
+    image_files = sorted([os.path.join(output_subdir, i) for i in os.listdir(output_subdir) if i.endswith(('.jpg', '.png'))])
+    with open(pdf_path, "wb") as f:
+        f.write(img2pdf.convert(image_files))
 
 if __name__ == "__main__":
     main()

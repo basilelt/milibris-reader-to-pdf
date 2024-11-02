@@ -118,7 +118,7 @@ class PDFConverterGUI(QWidget):
         - Both input_folder and output_folder must be selected
         """
         try:
-            if not hasattr(self, 'input_folder') or not hasattr(self, 'output_folder'):
+            if not self.input_folder or not self.output_folder:
                 QMessageBox.warning(self, "Missing Information", "Please select both input folder and output destination.")
                 return
 
@@ -129,7 +129,7 @@ class PDFConverterGUI(QWidget):
             for file_name in os.listdir(self.input_folder):
                 if file_name.lower().endswith('.html'):
                     html_path = os.path.join(self.input_folder, file_name)
-                    subprocess.run(['python3', gen_pdf_path, html_path], check=True)
+                    subprocess.run(['python3', gen_pdf_path, html_path, self.output_folder], check=True)
 
             QMessageBox.information(self, "Success", "PDF conversion completed successfully.")
         except subprocess.CalledProcessError as e:
