@@ -1,7 +1,24 @@
+"""
+setup.py - Build script for Milibris Reader to PDF application.
+
+This script configures the build process for creating a standalone macOS application
+that converts Milibris Reader HTML files to PDF format. It uses py2app to bundle
+the Python application into a native macOS .app package.
+
+Dependencies:
+    - PyQt6: For the graphical user interface
+    - img2pdf: For PDF conversion functionality
+    - py2app: For macOS application bundling
+
+Original work by Fabrice Aeschbacher
+Modified by BasileLT
+License: MIT
+"""
+
 from setuptools import setup
 
 APP = ['src/gui.py']
-DATA_FILES = ['src/gen-pdf.py', 'src/app_icon.icns']
+DATA_FILES = ['src/gen_pdf.py', 'src/app_icon.icns']
 OPTIONS = {
     'argv_emulation': True,
     'packages': ['PyQt6', 'img2pdf'],

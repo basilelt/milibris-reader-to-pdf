@@ -5,7 +5,7 @@ a = Analysis(
     ['src/gui.py'],
     pathex=[],
     binaries=[],
-    datas=[('src/gen-pdf.py', 'src'), ('src/app_icon.icns', 'src')],
+    datas=[('src/gen_pdf.py', 'src'), ('src/app_icon.icns', 'src')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
