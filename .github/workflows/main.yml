@@ -1,27 +1,23 @@
-name: Build and Upload macOS Application
+name: Build and Release macOS Application
 
 on:
   push:
     branches:
-      - main  # Trigger the workflow on pushes to the main branch
-    # You can add more branches or events as needed
+      - test
 
 jobs:
   build:
     runs-on: macos-latest
 
     steps:
-      # 1. Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # 2. Set up Python environment
       - name: Set Up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
 
-      # 3. Install Dependencies
       - name: Install Dependencies
         run: |
           python -m venv .venv
@@ -29,15 +25,30 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 4. Build the macOS Application using py2app
       - name: Build macOS App
         run: |
-          source venv/bin/activate
+          source .venv/bin/activate
           python setup.py py2app
+          cd dist
+          zip -r "Milibris Reader to PDF.zip" "Milibris Reader to PDF.app"
 
-      # 5. Upload the .app Bundle as an Artifact
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: MilibrisReaderToPDF-macOS
-          path: "dist/Milibris Reader to PDF.app"
+          tag_name: v${{ github.run_number }}
+          release_name: "Release v${{ github.run_number }}"
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: "dist/Milibris Reader to PDF.zip"
+          asset_name: "Milibris Reader to PDF.zip"
+          asset_content_type: application/zip
