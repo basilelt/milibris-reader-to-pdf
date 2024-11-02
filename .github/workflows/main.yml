@@ -19,7 +19,7 @@ jobs:
           python-version: '3.12'
       - name: Build macOS App
         run: |
-          python -m pip install -r requirements.txt py2app
+          python -m pip install -r requirements.txt
           python setup.py py2app
           cd dist && zip -r "MilibrisReaderToPDF-macOS.zip" "Milibris Reader to PDF.app"
       - name: Upload macOS Build
@@ -37,7 +37,7 @@ jobs:
           python-version: '3.12'
       - name: Build Linux App
         run: |
-          python -m pip install -r requirements.txt pyinstaller
+          python -m pip install -r requirements.txt
           pyinstaller build.spec
           cd dist && tar -czf MilibrisReaderToPDF-linux.tar.gz MilibrisReaderToPDF
       - name: Upload Linux Build
