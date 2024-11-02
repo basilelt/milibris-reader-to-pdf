@@ -1,5 +1,6 @@
 img2pdf==0.5.1
 PyQt6==6.7.1
-py2app==0.28.8
+py2app==0.28.8; sys_platform == 'darwin'
+pyinstaller==6.5.0; sys_platform == 'linux'
 setuptools==75.2.0
 packaging==24.1

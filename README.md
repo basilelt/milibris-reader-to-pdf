@@ -84,6 +84,24 @@ For developers interested in building the macOS application from source:
 3. **Locate the Built Application:**
    - The `.app` bundle will be located in the `dist/` directory.
 
+### Building from Source
+
+#### For macOS:
+```bash
+python -m pip install -r requirements.txt
+python setup.py py2app
+```
+
+#### For Linux:
+```bash
+python -m pip install -r requirements.txt
+pyinstaller build.spec
+```
+
+The built applications will be available in the dist directory:
+- macOS: Milibris Reader to PDF.app
+- Linux: MilibrisReaderToPDF executable
+
 ## Continuous Integration
 
 This project uses **GitHub Actions** to automate the build process for the macOS application. On every push to the `main` branch:
